@@ -13,6 +13,7 @@ requires = [
     'repoze.retry',
     'ZODB3',
     'WebError',
+    'docutils',
     ]
 
 setup(name='tutorial',
