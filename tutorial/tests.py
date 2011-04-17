@@ -122,3 +122,21 @@ class EditPageTests(unittest.TestCase):
         response = self._callFUT(context, request)
         self.assertEqual(response.location, 'http://example.com/')
         self.assertEqual(context.data, 'Hello yo!')
+
+class FunctionalTests(unittest.TestCase):
+    def setUp(self):
+        from tutorial import main
+        settings = { 'zodb_uri' : 'file://Data.fs' }
+        app = main({}, **settings)
+        from repoze.zodbconn.middleware import EnvironmentDeleterMiddleware
+        app = EnvironmentDeleterMiddleware(app)
+        from webtest import TestApp
+        self.testapp = TestApp(app)
+
+    def test_root(self):
+        res = self.testapp.get('/', status=302)
+        self.failUnless(not res.body)
+
+    def test_FrontPage(self):
+        res = self.testapp.get('/FrontPage', status=200)
+        self.failUnless('FrontPage' in res.body)
