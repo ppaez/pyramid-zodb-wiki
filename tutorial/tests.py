@@ -124,14 +124,25 @@ class EditPageTests(unittest.TestCase):
         self.assertEqual(context.data, 'Hello yo!')
 
 class FunctionalTests(unittest.TestCase):
+
     def setUp(self):
+        import tempfile
+        import os.path
         from tutorial import main
-        settings = { 'zodb_uri' : 'file://Data.fs' }
+        self.tmpdir = tempfile.mkdtemp()
+
+        dbpath = os.path.join( self.tmpdir, 'test.db?demostorage=true')
+        settings = { 'zodb_uri' : 'file://' + dbpath }
+
         app = main({}, **settings)
         from repoze.zodbconn.middleware import EnvironmentDeleterMiddleware
         app = EnvironmentDeleterMiddleware(app)
         from webtest import TestApp
         self.testapp = TestApp(app)
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree( self.tmpdir )
 
     def test_root(self):
         res = self.testapp.get('/', status=302)
@@ -140,3 +151,54 @@ class FunctionalTests(unittest.TestCase):
     def test_FrontPage(self):
         res = self.testapp.get('/FrontPage', status=200)
         self.failUnless('FrontPage' in res.body)
+
+    def test_unexisting_page(self):
+        res = self.testapp.get('/SomePage', status=404)
+        self.failUnless('Not Found' in res.body)
+
+    def test_successful_log_in(self):
+        res = self.testapp.get('/login?login=viewer&password=viewer&came_from=FrontPage&form.submitted=Login', status=302)
+        self.failUnless(res.location == 'FrontPage')
+
+    def test_failed_log_in(self):
+        res = self.testapp.get('/login?login=viewer&password=incorrect&came_from=FrontPage&form.submitted=Login', status=200)
+        self.failUnless('login' in res.body)
+
+    def test_logout_link_present_when_logged_in(self):
+        res = self.testapp.get('/login?login=viewer&password=viewer&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/FrontPage', status=200)
+        self.failUnless('Logout' in res.body)
+
+    def test_logout_link_not_present_after_logged_out(self):
+        res = self.testapp.get('/login?login=viewer&password=viewer&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/FrontPage', status=200)
+        res = self.testapp.get('/logout', status=302)
+        self.failUnless('Logout' not in res.body)
+
+    def test_anonymous_user_cannot_edit(self):
+        res = self.testapp.get('/FrontPage/edit_page', status=200)
+        self.failUnless('Login' in res.body)
+
+    def test_anonymous_user_cannot_add(self):
+        res = self.testapp.get('/add_page/NewPage', status=200)
+        self.failUnless('Login' in res.body)
+
+    def test_viewer_user_cannot_edit(self):
+        res = self.testapp.get('/login?login=viewer&password=viewer&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/FrontPage/edit_page', status=200)
+        self.failUnless('Login' in res.body)
+
+    def test_viewer_user_cannot_add(self):
+        res = self.testapp.get('/login?login=viewer&password=viewer&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/add_page/NewPage', status=200)
+        self.failUnless('Login' in res.body)
+
+    def test_editors_member_user_can_edit(self):
+        res = self.testapp.get('/login?login=editor&password=editor&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/FrontPage/edit_page', status=200)
+        self.failUnless('Editing' in res.body)
+
+    def test_editors_member_user_can_add(self):
+        res = self.testapp.get('/login?login=editor&password=editor&came_from=FrontPage&form.submitted=Login', status=302)
+        res = self.testapp.get('/add_page/NewPage', status=200)
+        self.failUnless('Editing' in res.body)
