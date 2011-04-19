@@ -153,59 +153,59 @@ class FunctionalTests(unittest.TestCase):
 
     def test_root(self):
         res = self.testapp.get('/', status=302)
-        self.failUnless(not res.body)
+        self.assertTrue(not res.body)
 
     def test_FrontPage(self):
         res = self.testapp.get('/FrontPage', status=200)
-        self.failUnless('FrontPage' in res.body)
+        self.assertTrue('FrontPage' in res.body)
 
     def test_unexisting_page(self):
         res = self.testapp.get('/SomePage', status=404)
-        self.failUnless('Not Found' in res.body)
+        self.assertTrue('Not Found' in res.body)
 
     def test_successful_log_in(self):
         res = self.testapp.get( self.viewer_login, status=302)
-        self.failUnless(res.location == 'FrontPage')
+        self.assertTrue(res.location == 'FrontPage')
 
     def test_failed_log_in(self):
         res = self.testapp.get( self.viewer_wrong_login, status=200)
-        self.failUnless('login' in res.body)
+        self.assertTrue('login' in res.body)
 
     def test_logout_link_present_when_logged_in(self):
         res = self.testapp.get( self.viewer_login, status=302)
         res = self.testapp.get('/FrontPage', status=200)
-        self.failUnless('Logout' in res.body)
+        self.assertTrue('Logout' in res.body)
 
     def test_logout_link_not_present_after_logged_out(self):
         res = self.testapp.get( self.viewer_login, status=302)
         res = self.testapp.get('/FrontPage', status=200)
         res = self.testapp.get('/logout', status=302)
-        self.failUnless('Logout' not in res.body)
+        self.assertTrue('Logout' not in res.body)
 
     def test_anonymous_user_cannot_edit(self):
         res = self.testapp.get('/FrontPage/edit_page', status=200)
-        self.failUnless('Login' in res.body)
+        self.assertTrue('Login' in res.body)
 
     def test_anonymous_user_cannot_add(self):
         res = self.testapp.get('/add_page/NewPage', status=200)
-        self.failUnless('Login' in res.body)
+        self.assertTrue('Login' in res.body)
 
     def test_viewer_user_cannot_edit(self):
         res = self.testapp.get( self.viewer_login, status=302)
         res = self.testapp.get('/FrontPage/edit_page', status=200)
-        self.failUnless('Login' in res.body)
+        self.assertTrue('Login' in res.body)
 
     def test_viewer_user_cannot_add(self):
         res = self.testapp.get( self.viewer_login, status=302)
         res = self.testapp.get('/add_page/NewPage', status=200)
-        self.failUnless('Login' in res.body)
+        self.assertTrue('Login' in res.body)
 
     def test_editors_member_user_can_edit(self):
         res = self.testapp.get( self.editor_login, status=302)
         res = self.testapp.get('/FrontPage/edit_page', status=200)
-        self.failUnless('Editing' in res.body)
+        self.assertTrue('Editing' in res.body)
 
     def test_editors_member_user_can_add(self):
         res = self.testapp.get( self.editor_login, status=302)
         res = self.testapp.get('/add_page/NewPage', status=200)
-        self.failUnless('Editing' in res.body)
+        self.assertTrue('Editing' in res.body)
