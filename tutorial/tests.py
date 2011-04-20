@@ -209,3 +209,8 @@ class FunctionalTests(unittest.TestCase):
         res = self.testapp.get( self.editor_login, status=302)
         res = self.testapp.get('/add_page/NewPage', status=200)
         self.assertTrue('Editing' in res.body)
+
+    def test_editors_member_user_can_view(self):
+        res = self.testapp.get( self.editor_login, status=302)
+        res = self.testapp.get('/FrontPage', status=200)
+        self.assertTrue('FrontPage' in res.body)
