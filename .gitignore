@@ -6,3 +6,4 @@ Data.fs*
 .coverage
 tutorial.egg-info/
 .pdbrc
+dist/
